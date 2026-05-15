@@ -7,9 +7,9 @@ const sendMailVerfication = require('./mailerService')
 
 const register = async (body) => {
 
-    if (!body.name || !body.email || !body.password) {
-        throw new Error('Name, Email, Password is required ')
-    }
+    // if (!body.name || !body.email || !body.password) {
+    //     throw new Error('Name, Email, Password is required ')
+    // }
 
     let checkemail = await user.getByEmail(body.email)
 

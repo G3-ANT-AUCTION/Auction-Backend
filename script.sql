@@ -113,4 +113,5 @@ CREATE TABLE product_images (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-
+------------------- 5-14-26 -----------------------
+INSERT INTO roles (name) values ('admin'),('user')

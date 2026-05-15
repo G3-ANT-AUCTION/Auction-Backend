@@ -4,6 +4,7 @@ const auth = require('../service/auth')
 const register = async (req, res) => {
 
     try {
+        
         let result = await auth.register(req.validatedData);
 
         res.json({

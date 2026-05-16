@@ -1,22 +1,20 @@
 const pool = require('../config/db')
 
 const getByEmail = async (email) => {
-    let [row] = await pool.query('select email,password,id, phone, address,token,verification_token,is_verified from users where email = ? ', [email])
+    let [row] = await pool.query('select email,password,id,token,verification_token,is_verified from users where email = ? ', [email])
 
     return row
 }
 
 const create = async (body) => {
-    let data = [body.name, body.email, body.password, body.verificationToken, body.verificatoinExpires];
-    let [result] = await pool.query('insert into users (name, email, password,verification_token,verification_expires) values (?, ?, ?, ?, ?)', data);
+    let [result] = await pool.query('insert into users (email, password,role_id,verification_token,verification_expires) values (?,?, ?, ?, ?)', [body.email, body.password, 2, body.verificationToken, body.verificatoinExpires]);
 
     return result.insertId;
 }
 
 const findById = async (id) => {
-    let [row] = await pool.query('select * from users where id = ?', [id]);
-
-    return row;
+    let [row] = await pool.query('SELECT u.id,up.full_name,up.gender,u.email,up.phone_number,r.name as role,up.address,up.dob,up.profile_image,u.verification_token,is_active,u.is_verified,u.token FROM users u INNER JOIN user_profiles up on u.id = up.user_id left join roles r on u.role_id = r.id WHERE u.id = ?', [id]);
+    return row[0];
 }
 
 const findByToken = async (token) => {

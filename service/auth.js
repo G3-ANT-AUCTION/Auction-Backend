@@ -1,4 +1,5 @@
 const user = require('../model/users')
+const user_profiles = require('../model/user_profiles')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const jwtConfig = require('../config/jwt')
@@ -6,11 +7,6 @@ const crypto = require('crypto')
 const sendMailVerfication = require('./mailerService')
 
 const register = async (body) => {
-
-    // if (!body.name || !body.email || !body.password) {
-    //     throw new Error('Name, Email, Password is required ')
-    // }
-
     let checkemail = await user.getByEmail(body.email)
 
     if (checkemail.length > 0) {
@@ -19,10 +15,10 @@ const register = async (body) => {
 
     const hashPassword = await bcrypt.hash(body.password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificatoinExpires = new Date(Date.now() + 3 * 60 * 1000);
+    const verificatoinExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     const result = await user.create({
-        name: body.name,
+        fullName: body.name,
         email: body.email,
         password: hashPassword,
         verificationToken,
@@ -31,15 +27,18 @@ const register = async (body) => {
 
     await sendMailVerfication.sendVerificationEmail(body.email, verificationToken)
 
-    const row = await user.findById(result)
+    await user_profiles.createUserProfile({
+        userId: result,
+        fullName: body.name,
+        gender: body.gender,
+        address: body.address,
+    })
 
+    const row = await user.findById(result)
     return row;
 }
 
 const login = async (body) => {
-    if (!body.email || !body.password) {
-        throw new Error(' Email, Password is required ')
-    }
 
     let userInfo = await user.getByEmail(body.email)
 
@@ -64,7 +63,7 @@ const login = async (body) => {
         },
         jwtConfig.secret,
         {
-            expiresIn: jwtConfig.exprieIn
+            expiresIn: jwtConfig.expireIn
         }
     )
 
@@ -136,7 +135,7 @@ const resendVerificationEmail = async (email) => {
     await user.resendVerificationEmail({
         verificationToken,
         verificatoinExpires,
-        id : userInfo[0].id
+        id: userInfo[0].id
     })
 
     await sendMailVerfication.sendVerificationEmail(email, verificationToken)

@@ -11,6 +11,8 @@ const registerUserSchema = Joi.object({
             'string.pattern.base': 'Password must contain uppercase, lowercase, number, and special character.',
             'string.min': 'Password must be at least 8 characters long.',
         }),
+    gender : Joi.string().valid('male', 'female', 'other').required(),
+    address : Joi.string().required()
 })
 
 const loginUserSchema = Joi.object({

@@ -113,4 +113,15 @@ CREATE TABLE product_images (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+-- 5-14-26 -----------------------
+INSERT INTO roles (name) values ('admin'),('user');
+-- 5-16-26 -----------------------
+ALTER TABLE user_profiles modify COLUMN profile_image VARCHAR(255) default 'public/images/default-user-img.jpg';
 
+ALTER TABLE users ADD COLUMN token VARCHAR(255) not null after is_verified;
+
+ALTER TABLE users MODIFY COLUMN token VARCHAR(255) null after is_verified;
+
+ALTER TABLE users add column reset_token varchar(256) after verification_expires;
+
+ALTER TABLE users add column reset_expires DATETIME null after reset_token;

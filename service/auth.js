@@ -1,16 +1,14 @@
 const user = require('../model/users')
+const user_profiles = require('../model/user_profiles')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const jwtConfig = require('../config/jwt')
 const crypto = require('crypto')
 const sendMailVerfication = require('./mailerService')
+const sendForgotPassowrdEmail = require('./forgotPassword')
+
 
 const register = async (body) => {
-
-    if (!body.name || !body.email || !body.password) {
-        throw new Error('Name, Email, Password is required ')
-    }
-
     let checkemail = await user.getByEmail(body.email)
 
     if (checkemail.length > 0) {
@@ -19,10 +17,10 @@ const register = async (body) => {
 
     const hashPassword = await bcrypt.hash(body.password, 10);
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificatoinExpires = new Date(Date.now() + 3 * 60 * 1000);
+    const verificatoinExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     const result = await user.create({
-        name: body.name,
+        fullName: body.name,
         email: body.email,
         password: hashPassword,
         verificationToken,
@@ -31,15 +29,18 @@ const register = async (body) => {
 
     await sendMailVerfication.sendVerificationEmail(body.email, verificationToken)
 
-    const row = await user.findById(result)
+    await user_profiles.createUserProfile({
+        userId: result,
+        fullName: body.name,
+        gender: body.gender,
+        address: body.address,
+    })
 
+    const row = await user.findById(result)
     return row;
 }
 
 const login = async (body) => {
-    if (!body.email || !body.password) {
-        throw new Error(' Email, Password is required ')
-    }
 
     let userInfo = await user.getByEmail(body.email)
 
@@ -50,7 +51,7 @@ const login = async (body) => {
     let isMatch = await bcrypt.compare(body.password, userInfo[0].password)
     // console.log(isMatch);
     if (!isMatch) {
-        console.log('Email or Password id invalid ');
+        throw new Error('Email or Password id invalid ');
     }
 
     if (!userInfo[0].is_verified) {
@@ -64,7 +65,7 @@ const login = async (body) => {
         },
         jwtConfig.secret,
         {
-            expiresIn: jwtConfig.exprieIn
+            expiresIn: jwtConfig.expireIn
         }
     )
 
@@ -131,12 +132,12 @@ const resendVerificationEmail = async (email) => {
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificatoinExpires = new Date(Date.now() + 3 * 60 * 1000);
+    const verificatoinExpires = new Date(Date.now() + 60 * 60 * 1000);
 
     await user.resendVerificationEmail({
         verificationToken,
         verificatoinExpires,
-        id : userInfo[0].id
+        id: userInfo[0].id
     })
 
     await sendMailVerfication.sendVerificationEmail(email, verificationToken)
@@ -145,11 +146,51 @@ const resendVerificationEmail = async (email) => {
     return { message: 'Verification email resent successfully' }
 }
 
+const forgotPassword = async (email) => {
+    const row = await user.getByEmail(email);
+    console.log(row);
+    if (row.length == 0) {
+        throw new Error("Invalid Email");
+    }
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    await user.sendForgotPasswordEmail({
+        resetToken: resetToken,
+        resetExpires: resetExpires,
+        id: row[0].id
+    })
+
+    await sendForgotPassowrdEmail(email, resetToken)
+    const result = await user.findById(row[0].id);
+    return {
+        resetToken: result.reset_token,
+        resetExpires: result.reset_expires
+    };
+}
+
+const resetPassword = async (body) => {
+    const row = await user.findByResetToken(body.token);
+    if (row.length == 0) {
+        throw new Error("Invalid Token");
+    }
+    if(!row[0].reset_expires || row[0].reset_expires < new Date()){
+        throw new Error("Token is expired");
+    }
+    const hashPassword = await bcrypt.hash(body.password,10);
+    await user.resetPassword({
+        password: hashPassword,
+        id: row[0].id
+    })
+
+}
 module.exports = {
     register,
     login,
     getById,
     logout,
     verifyEmail,
-    resendVerificationEmail
+    resendVerificationEmail,
+    forgotPassword,
+    resetPassword
 }

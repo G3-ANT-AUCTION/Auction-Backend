@@ -13,13 +13,18 @@ const create = async (body) => {
 }
 
 const findById = async (id) => {
-    let [row] = await pool.query('SELECT u.id,up.full_name,up.gender,u.email,up.phone_number,r.name as role,up.address,up.dob,up.profile_image,u.verification_token,is_active,u.is_verified,u.token FROM users u INNER JOIN user_profiles up on u.id = up.user_id left join roles r on u.role_id = r.id WHERE u.id = ?', [id]);
+    let [row] = await pool.query('SELECT u.id,up.full_name,up.gender,u.email,up.phone_number,r.name as role,up.address,up.dob,up.profile_image,u.verification_token,is_active,u.is_verified,u.token,u.reset_token,u.reset_expires FROM users u INNER JOIN user_profiles up on u.id = up.user_id left join roles r on u.role_id = r.id WHERE u.id = ?', [id]);
     return row[0];
 }
 
 const findByToken = async (token) => {
     let [row] = await pool.query('select * from users where token = ?', [token]);
 
+    return row;
+}
+
+const findByResetToken = async (token) => {
+    let [row] = await pool.query('select id,email,reset_token,reset_expires from users where reset_token = ?', [token]);
     return row;
 }
 
@@ -49,6 +54,16 @@ const resendVerificationEmail = async (body) => {
     return row
 }
 
+const sendForgotPasswordEmail = async (body) => {
+    let sql = 'UPDATE users SET reset_token = ?, reset_expires = ? WHERE id = ?';
+    await pool.query(sql, [body.resetToken, body.resetExpires, body.id]);
+}
+
+const resetPassword = async (body) =>{
+    let sql = 'UPDATE users SET password = ?, reset_token = null, reset_expires = null WHERE id = ?';
+    await pool.query(sql, [body.password, body.id]);
+}
+
 module.exports = {
 
     getByEmail,
@@ -60,6 +75,9 @@ module.exports = {
     findByToken,
     findVerificationToken,
     verifyEmail,
-    resendVerificationEmail
+    resendVerificationEmail,
+    sendForgotPasswordEmail,
+    findByResetToken,
+    resetPassword
 
 }

@@ -23,9 +23,25 @@ const loginUserSchema = Joi.object({
 const resendVerificationEmailSchema = Joi.object({
     email: Joi.string().email().required()
 })
+const forgotPassword = Joi.object({
+    email: Joi.string().email().required()
+})
+const resetPassword = Joi.object({
+    password: Joi.string()
+        .min(8)
+        .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])'))
+        .required()
+        .messages({
+            'string.pattern.base': 'Password must contain uppercase, lowercase, number, and special character.',
+            'string.min': 'Password must be at least 8 characters long.',
+        }),
+    token: Joi.string().required(),
+})
 
 module.exports = {
     registerUserSchema,
     loginUserSchema,
-    resendVerificationEmailSchema
+    resendVerificationEmailSchema,
+    forgotPassword,
+    resetPassword
 }

@@ -32,7 +32,7 @@ const uploadImage = async (image , id) =>{
   if (!image) {
     throw new Error("Image is required");
   }
-  const filePath = `/uploads/profiles/${image.filename}`;
+  const filePath = `/public/uploads/profiles/${image.filename}`
   let result = await userModels.uploadImage(filePath , id)
   if(result.affectedRows == 0) {
     throw new Error("Failed to upload profile image");

@@ -152,7 +152,7 @@ const uploadImage = async (image , id) =>{
 
 const deleteImage = async (id) =>{
     let [result] = await pool.query(
-        `UPDATE user_profiles SET profile_image = 'public/images/defalut-user-img.jpg' WHERE user_id = ?
+        `UPDATE user_profiles SET profile_image = 'images/defalut-user-img.jpg' WHERE user_id = ?
         `,[id]
     )
     return result

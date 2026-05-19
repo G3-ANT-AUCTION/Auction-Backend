@@ -1,4 +1,5 @@
-const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 const userModels = require('../model/users')
 const getAll = async (page , per_page ,sort_by , search) =>{
   let offset = (page - 1) * per_page
@@ -32,7 +33,20 @@ const uploadImage = async (image , id) =>{
   if (!image) {
     throw new Error("Image is required");
   }
-  const filePath = `/public/uploads/profiles/${image.filename}`
+  const user = await userModels.getUser(id);
+  if (user[0].profile_image) {
+    // example: /public/uploads/profiles/abc.png
+    const oldImagePath = path.join(
+      __dirname,
+      "../public/uploads",
+      user[0].profile_image
+    );
+
+    if (fs.existsSync(oldImagePath)) {
+      fs.unlinkSync(oldImagePath);
+    }
+  }
+  const filePath = `profiles/${image.filename}`
   let result = await userModels.uploadImage(filePath , id)
   if(result.affectedRows == 0) {
     throw new Error("Failed to upload profile image");
@@ -44,6 +58,22 @@ const uploadImage = async (image , id) =>{
 }
 
 const deleteImage = async (id) =>{
+  const user = await userModels.getUser(id);
+  if (!user.length) {
+    throw new Error("User not found");
+  }
+  if (user[0].profile_image) {
+
+    const imagePath = path.join(
+      __dirname,
+      "../public/uploads",
+      user[0].profile_image
+    );
+
+    if (fs.existsSync(imagePath)) {
+      fs.unlinkSync(imagePath);
+    }
+  }
   let result = await userModels.deleteImage(id)
   if(result.affectedRows === 0){
     throw new Error("Failed to delete profile image or user not found");

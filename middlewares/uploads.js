@@ -27,7 +27,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const createStorage = (folder) => {
-  const uploadPath = path.join(__dirname, `../uploads/${folder}`);
+  const uploadPath = path.join(__dirname, `/public/uploads/${folder}`);
 
   return multer.diskStorage({
     destination: (req, file, cb) => {

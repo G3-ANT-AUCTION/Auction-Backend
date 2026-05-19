@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require("path");
 const auth = require('./routes/auth')
 const users = require('./routes/users')
 const categories = require('./routes/category')
@@ -9,6 +10,7 @@ require('dotenv').config();
 app.use(express.json())
 app.use(express.urlencoded({extended : true}))
 app.use("/uploads",express.static(path.join(__dirname, "public/uploads")));
+app.use("/images",express.static(path.join(__dirname, "public/images")));
 app.use('/api/auth',auth);
 app.use('/api/users' , users)
 app.use('/api' , categories)

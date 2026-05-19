@@ -125,3 +125,77 @@ ALTER TABLE users MODIFY COLUMN token VARCHAR(255) null after is_verified;
 ALTER TABLE users add column reset_token varchar(256) after verification_expires;
 
 ALTER TABLE users add column reset_expires DATETIME null after reset_token;
+
+-- 19-05-2026
+CREATE TABLE auctions (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+
+    product_id INT NOT NULL,
+
+    current_price DECIMAL(10,2) NOT NULL,
+
+    auto_bid_enabled BOOLEAN DEFAULT FALSE,
+
+    status ENUM('Upcoming', 'Live', 'Ended') DEFAULT 'Upcoming',
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT FK_auctions_product FOREIGN KEY (product_id)
+        REFERENCES products(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE auto_bids (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+
+    auction_id INT NOT NULL,
+    user_id INT NOT NULL,
+
+    max_bid_amount DECIMAL(10,2) NOT NULL,
+
+    increment_step DECIMAL(10,2) DEFAULT 1.00,
+
+    is_active BOOLEAN DEFAULT TRUE,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT UQ_auto_bid UNIQUE (auction_id, user_id),
+
+    CONSTRAINT FK_auto_bids_auction FOREIGN KEY (auction_id)
+        REFERENCES auctions(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT FK_auto_bids_user FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE winners (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+
+    auction_id INT NOT NULL,
+    user_id INT NOT NULL,
+
+    final_price DECIMAL(10,2) NOT NULL,
+    win_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT UQ_winners_auction UNIQUE (auction_id),
+
+    CONSTRAINT FK_winners_auction FOREIGN KEY (auction_id)
+        REFERENCES auctions(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT FK_winners_user FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
